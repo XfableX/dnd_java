@@ -1,11 +1,7 @@
 package au.com.lachlanmaxwell.ttrpgbattlemanagerbackend;
 
-import au.com.lachlanmaxwell.ttrpgbattlemanagerbackend.CharacterEntity;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.jws.soap.SOAPBinding;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -14,17 +10,15 @@ import org.springframework.web.bind.annotation.*;
 import org.json.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import java.util.*;
 
 @CrossOrigin
 @RestController
-public class Controller {
-    public GameSession session = new GameSession("Session", new ArrayList<CharacterEntity>());
+public class Controller{
 
+
+
+          //  new GameSession("Session", new ArrayList<CharacterEntity>());
 
     private SimpMessagingTemplate template;
 
@@ -33,14 +27,26 @@ public class Controller {
         this.template = template;
     }
 
+    @Autowired
+    public CharacterRepository characterRepo;
+
+
+    @Autowired
+    public SessionRepository sessionRepo;
+
+
+
 
     @PostMapping("nextTurn")
-    public void nextTurn(){
+    public void nextTurn(@RequestHeader String sessionId){
+        GameSession session = sessionRepo.findGameSessionBy_sessionId(sessionId);
         session.nextTurn();
-        update();
+        sessionRepo.save(session);
+        update(sessionId);
     }
     @PostMapping("/syncSession")
-    public void syncSession(@RequestBody String sessionReq){
+    public void syncSession(@RequestBody String sessionReq, @RequestHeader String sessionId){
+        GameSession session = sessionRepo.findGameSessionBy_sessionId(sessionId);
         session.CharacterEntities = new ArrayList<CharacterEntity>();
         JSONObject sessionJson = new JSONObject(sessionReq);
         session.currentTurn = sessionJson.getJSONObject("TurnController").getInt("currentTurn");
@@ -70,19 +76,19 @@ public class Controller {
                 throw new RuntimeException(e);
             }
             CharacterEntity newChara = new CharacterEntity(name,initiative,armorClass,MaxHealth,SpellSlots);
-            newChara._usedSpellSlots = UsedSlots;
-            newChara._currentHealth = CurHealth;
-            newChara.savingThrowNeg = NegSavingThrow;
-            newChara.savingThrowPos = PosSavingThrow;
-            newChara._reactionUsed = reactionUsed;
-            newChara._concentrating = concentrating;
+            newChara.set_usedSpellSlots(UsedSlots);
+            newChara.set_currentHealth(CurHealth);
+            newChara.set_savingThrowNeg(NegSavingThrow);
+            newChara.set_savingThrowPos(PosSavingThrow);
+            newChara.set_reactionUsed(reactionUsed);
+            newChara.set_concentrating(concentrating);
             session.CharacterEntities.add(newChara);
             System.out.println(sessionReq);
         }
     }
 
     @PostMapping("/updateCharacter")
-    public void updateCharacter(@RequestBody String profileString){
+    public void updateCharacter(@RequestBody String profileString, @RequestHeader String sessionId){
         JSONObject profile = new JSONObject(profileString);
         String uuid = profile.getString("UUID");
         Map<String, Integer> SpellSlots = new HashMap<String,Integer>();
@@ -113,53 +119,84 @@ public class Controller {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        CharacterEntity newChara = session.CharacterEntities.stream().filter(character -> uuid.equals(character._uuid)).findFirst().orElse(null);
-        newChara._spellSlots = SpellSlots;
-        newChara.status = status;
-        newChara._usedSpellSlots = UsedSlots;
-        newChara._currentHealth = CurHealth;
-        newChara.savingThrowNeg = NegSavingThrow;
-        newChara.savingThrowPos = PosSavingThrow;
-        newChara._reactionUsed = reactionUsed;
-        newChara._concentrating = concentrating;
-        newChara.condition = condition;
-        newChara._characterName = name;
-        newChara._armorClass = armorClass;
-        newChara._initiative = initiative;
-        newChara._maxHealth = MaxHealth;
-
-
-        update();
+        GameSession session = sessionRepo.findGameSessionBy_sessionId(sessionId);
+        CharacterEntity newChara = session.CharacterEntities.stream().filter(character -> uuid.equals(character.get_uuid())).findFirst().orElse(null);
+        newChara.set_spellSlots(SpellSlots);
+        newChara.setStatus(status);
+        newChara.set_usedSpellSlots(UsedSlots);
+        newChara.set_currentHealth(CurHealth);
+        newChara.set_savingThrowNeg(NegSavingThrow);
+        newChara.set_savingThrowPos(PosSavingThrow);
+        newChara.set_reactionUsed(reactionUsed);
+        newChara.set_concentrating(concentrating);
+        newChara.setCondition(condition);
+        newChara.set_characterName(name);
+        newChara.set_armorClass(armorClass);
+        newChara.set_initiative(initiative);
+        newChara.set_maxHealth(MaxHealth);
+        characterRepo.save(newChara);
+        sessionRepo.save(session);
+        update(sessionId);
     }
 
     @PostMapping("/addCharacter")
-    public void recieveCharacter(@RequestBody String profileString){
+    public void recieveCharacter(@RequestBody String profileString, @RequestHeader String sessionId){
+        GameSession session = sessionRepo.findGameSessionBy_sessionId(sessionId);
         JSONObject profile = new JSONObject(profileString);
         CharacterEntity newCharacter = new CharacterEntity(profile.getString("Name"),profile.getInt("Initiative"), profile.getInt("ArmorClass"), profile.getInt("MaxHealth"));
         session.CharacterEntities.add(newCharacter);
-
-        update();
+        characterRepo.save(newCharacter);
+        List<CharacterEntity> charactersDB = characterRepo.findAll();
+        for (CharacterEntity characterEntity : charactersDB) {
+            System.out.println(characterEntity.get_characterName());
+        }
+        sessionRepo.save(session);
+        update(sessionId);
     }
 
+
     @PostMapping("/addEmptyCharacter")
-    public void addEmptyChar(){
+    public void addEmptyChar(@RequestHeader String sessionId){
+        GameSession session = sessionRepo.findGameSessionBy_sessionId(sessionId);
         CharacterEntity newCharacter = new CharacterEntity("Untitled Character",0, 0, 0);
         session.CharacterEntities.add(newCharacter);
-
-        update();
+        //characterRepo.save(newCharacter);
+        sessionRepo.save(session);
+        update(sessionId);
     }
 
     @GetMapping("/getAll")
-    public String getString(){
+    public String getString(@RequestHeader String sessionId){
+        GameSession session = sessionRepo.findGameSessionBy_sessionId(sessionId);
         System.out.println(session.toJson().toString());
         return  session.toJson();
     }
 
+    @GetMapping("/newSession")
+    public String newSession(){
+        GameSession session = new GameSession(getSaltString(), new ArrayList<CharacterEntity>());
+        System.out.println(session.toJson().toString());
+        sessionRepo.save(session);
+        return session._sessionId;
+    }
+
+    protected String getSaltString() {
+        String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+        StringBuilder salt = new StringBuilder();
+        Random rnd = new Random();
+        while (salt.length() < 6) { // length of the random string.
+            int index = (int) (rnd.nextFloat() * SALTCHARS.length());
+            salt.append(SALTCHARS.charAt(index));
+        }
+        String saltStr = salt.toString();
+        return saltStr;
+
+    }
     @MessageMapping("/app")
     @SendTo("/socket/update")
-    public String update()  {
+    public String update(String sessionId)  {
         System.out.println("update sent");
-        template.convertAndSend("/socket/update","update");
+        template.convertAndSend("/socket/update/" + sessionId,"update");
         return "update";
     }
 
