@@ -1,4 +1,4 @@
-package au.com.lachlanmaxwell.ttrpgbattlemanagerbackend;
+package au.com.lachlanmaxwell.ttrpgbattlemanagerbackend.session;
 
 import jakarta.persistence.*;
 import org.json.JSONArray;
@@ -48,6 +48,28 @@ public class GameSession {
                 character.set_reactionUsed(false);
             }
         }
+    }
+
+    @ManyToMany(mappedBy = "JoinedSessions")
+    private List<TtrpgUser> joinedTtrpgUsers;
+
+    public List<TtrpgUser> getJoinedUsers() {
+        return joinedTtrpgUsers;
+    }
+
+    public void setJoinedUsers(List<TtrpgUser> joinedTtrpgUsers) {
+        this.joinedTtrpgUsers = joinedTtrpgUsers;
+    }
+
+    @ManyToOne(optional = false)
+    private TtrpgUser Owner;
+
+    public TtrpgUser getOwner() {
+        return Owner;
+    }
+
+    public void setOwner(TtrpgUser owner) {
+        Owner = owner;
     }
 }
 
