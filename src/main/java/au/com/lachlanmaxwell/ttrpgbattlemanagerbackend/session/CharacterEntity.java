@@ -30,10 +30,47 @@ public class CharacterEntity
         this._spellSlots = _spellSlots;
         this._usedSpellSlots = _usedSpellSlots;
     }
+    public JSONObject getCharacterEntityJsonJoinedUser(String joinedUser) {
+        JSONObject character = new JSONObject();
 
+
+        character.put("Inititative",_initiative);
+        character.put("UUID", _uuid);
+        character.put("Concentrating",_concentrating);
+        character.put("ReactionUsed",_reactionUsed);
+        character.put("Condition",condition);
+        character.put("Status", status);
+        character.put("Name",_characterName);
+        character.put("Owner", _owner);
+
+
+        if(joinedUser.equals(_owner)) {
+            character.put("ArmorClass", _armorClass);
+            character.put("MaxHealth", _maxHealth);
+            character.put("CurrentHealth", _currentHealth);
+
+            character.put("SpellSlots", _spellSlots);
+            character.put("UsedSlots", _usedSpellSlots);
+            character.put("PosSavingThrow", _savingThrowPos);
+            character.put("NegSavingThrow", _savingThrowNeg);
+        }
+        else {
+            character.put("ArmorClass", -1);
+            character.put("MaxHealth", -1);
+            character.put("CurrentHealth", -1);
+
+            character.put("SpellSlots",  new HashMap<String,Integer>());
+            character.put("UsedSlots",  new HashMap<String,Integer>());
+            character.put("PosSavingThrow", 0);
+            character.put("NegSavingThrow", 0);
+        }
+
+        return character;
+    }
     public JSONObject getCharacterEntityJson(){
         JSONObject character = new JSONObject();
         character.put("UUID", _uuid);
+        character.put("Owner", _owner);
         character.put("Name",_characterName);
         character.put("Inititative",_initiative);
         character.put("ArmorClass",_armorClass);
@@ -103,6 +140,17 @@ public class CharacterEntity
     private List<Status> status = new ArrayList<Status>();
     private int _savingThrowPos = 0;
     private int _savingThrowNeg = 0;
+
+    @Transient
+    public String get_owner() {
+        return _owner;
+    }
+    @Transient
+    public void set_owner(String _owner) {
+        this._owner = _owner;
+    }
+
+    private String  _owner = "";
 
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Integer> _spellSlots = new HashMap<String,Integer>();

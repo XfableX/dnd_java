@@ -75,6 +75,24 @@ public class AuthenticationController {
         }
     }
 
+    @GetMapping("/getUserJoinedSessions")
+    public String getUserJoinedSessions(@RequestHeader String token) {
+        System.out.println("Getting sesh");
+        try{
+            var jwt = Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            List<GameSession> sessionList = userRepository.findByUsername(jwt.getPayload().getSubject()).JoinedSessions;
+            String sessionListStr = "";
+            for(GameSession session : sessionList) {
+                sessionListStr += session._sessionId + ",";
+            }
+            System.out.println("Sessions: " + sessionListStr);
+            return sessionListStr;
+        }
+        catch(JwtException e){
+            return "err";
+        }
+    }
+
     public byte[] hashPassword(String password) {
         byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
         byte[] passwordHash;

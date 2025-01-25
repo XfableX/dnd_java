@@ -17,6 +17,15 @@ repositories {
     mavenCentral()
 }
 
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'au.com.lachlanmaxwell.ttrpgbattlemanagerbackend.Main'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 dependencies {
     implementation 'org.json:json:20240303'
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'

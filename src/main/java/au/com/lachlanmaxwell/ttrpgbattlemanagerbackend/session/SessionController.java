@@ -81,6 +81,10 @@ public class SessionController {
         }
         String name = profile.getString("Name");
         int CurHealth = profile.getInt("CurrentHealth");
+        String Owner = "";
+        if(profile.has("Owner")) {
+            Owner = profile.getString("Owner");
+        }
         Condition condition = Condition.valueOf(profile.getString("Condition"));
         boolean concentrating = profile.getBoolean("Concentrating");
         boolean reactionUsed = profile.getBoolean("ReactionUsed");
@@ -101,10 +105,13 @@ public class SessionController {
         }
         GameSession session = sessionRepo.findGameSessionBy_sessionId(sessionId);
         TtrpgUser user = getUserFromJWT(token);
-        if(session.getOwner().equals(user)){
-            CharacterEntity newChara = session.CharacterEntities.stream().filter(character -> uuid.equals(character.get_uuid())).findFirst().orElse(null);
+        CharacterEntity newChara = session.CharacterEntities.stream().filter(character -> uuid.equals(character.get_uuid())).findFirst().orElse(null);
+        if(session.getOwner().equals(user) || newChara.get_owner().equals(user.getUsername())){
+            System.out.println("You are the owner");
+
             newChara.set_spellSlots(SpellSlots);
             newChara.setStatus(status);
+            newChara.set_owner(Owner);
             newChara.set_usedSpellSlots(UsedSlots);
             newChara.set_currentHealth(CurHealth);
             newChara.set_savingThrowNeg(NegSavingThrow);
@@ -116,11 +123,24 @@ public class SessionController {
             newChara.set_armorClass(armorClass);
             newChara.set_initiative(initiative);
             newChara.set_maxHealth(MaxHealth);
+            if(userRepository.findByUsername(Owner) != null){
+                System.out.println("User is not null");
+                TtrpgUser newJoiner = userRepository.findByUsername(Owner);
+                if(!newJoiner.JoinedSessions.contains(session)){
+                    session.addJoinedTtrpgUser(newJoiner);
+                    newJoiner.JoinedSessions.add(session);
+                }
+
+            }
+            else{
+                System.out.println("User is null");
+            }
+
             characterRepo.save(newChara);
             sessionRepo.save(session);
-            update(sessionId);
-        }
 
+        }
+        update(sessionId);
     }
 
     @PostMapping("/addCharacter")
@@ -162,6 +182,9 @@ public class SessionController {
         if(session.getOwner().equals(user)) {
             System.out.println(session.toJson().toString());
             return session.toJson();
+        }
+        else if(session.getJoinedUsers().contains(user)) {
+            return session.toJsonJoinedUser(user.getUsername());
         }
         return  null;
     }

@@ -27,6 +27,18 @@ public class GameSession {
         response.put("Characters",Characters);
         return  response.toString();
     }
+
+    public String toJsonJoinedUser(String joinedUser){
+        JSONObject response = new JSONObject();
+        response.put("Turn",currentTurn);
+        response.put("Round",round);
+        JSONArray Characters = new JSONArray();
+        for(CharacterEntity i : CharacterEntities){
+            Characters.put(i.getCharacterEntityJsonJoinedUser(joinedUser));
+        }
+        response.put("Characters",Characters);
+        return  response.toString();
+    }
     @Id
     String _sessionId;
     int currentTurn = 0;
@@ -59,6 +71,10 @@ public class GameSession {
 
     public void setJoinedUsers(List<TtrpgUser> joinedTtrpgUsers) {
         this.joinedTtrpgUsers = joinedTtrpgUsers;
+    }
+
+    public void addJoinedTtrpgUser(TtrpgUser joinedTtrpgUser) {
+        joinedTtrpgUsers.add(joinedTtrpgUser);
     }
 
     @ManyToOne(optional = false)
