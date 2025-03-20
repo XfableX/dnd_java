@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'au.com.lachlanmaxwell'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.4-SNAPSHOT'
 
 java {
     toolchain {
@@ -17,11 +17,29 @@ repositories {
     mavenCentral()
 }
 
+jar {
+    jar.enabled = false
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'au.com.lachlanmaxwell.ttrpgbattlemanagerbackend.Main'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 dependencies {
     implementation 'org.json:json:20240303'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'jakarta.persistence:jakarta.persistence-api'
+    implementation 'jakarta.inject:jakarta.inject-api'
     implementation 'org.springframework.boot:spring-boot-starter-hateoas'
     //implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    runtimeOnly 'com.h2database:h2'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-web-services'
     implementation 'org.springframework.session:spring-session-core'

@@ -1,4 +1,4 @@
-package au.com.lachlanmaxwell.ttrpgbattlemanagerbackend;
+package au.com.lachlanmaxwell.ttrpgbattlemanagerbackend.session;
 
 public enum Status {
     blinded,
