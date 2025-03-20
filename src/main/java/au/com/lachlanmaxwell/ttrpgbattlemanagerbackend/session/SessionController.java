@@ -3,6 +3,7 @@ package au.com.lachlanmaxwell.ttrpgbattlemanagerbackend.session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -156,6 +157,20 @@ public class SessionController {
             for (CharacterEntity characterEntity : charactersDB) {
                 System.out.println(characterEntity.get_characterName());
             }
+            sessionRepo.save(session);
+            update(sessionId);
+        }
+    }
+
+    @Transactional
+    @PostMapping("/removeCharacter")
+    public void removeCharacter(@RequestBody String profileString, @RequestHeader String sessionId, @RequestHeader String token){
+        GameSession session = sessionRepo.findGameSessionBy_sessionId(sessionId);
+        TtrpgUser user = getUserFromJWT(token);
+        if(session.getOwner().equals(user)) {
+            JSONObject profile = new JSONObject(profileString);
+            String uuid = profile.getString("UUID");
+            characterRepo.removeBy_uuid(uuid);
             sessionRepo.save(session);
             update(sessionId);
         }

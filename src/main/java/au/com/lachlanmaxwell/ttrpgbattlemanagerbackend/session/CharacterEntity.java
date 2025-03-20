@@ -3,6 +3,7 @@ package au.com.lachlanmaxwell.ttrpgbattlemanagerbackend.session;
 import java.util.*;
 
 import jakarta.persistence.*;
+import jakarta.transaction.Transactional;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.json.JSONObject;
@@ -278,5 +279,7 @@ interface CharacterRepository extends Repository<CharacterEntity,String> {
     List<CharacterEntity> findAll();
     CharacterEntity findBy_uuid(String _uuid);
 
+    @Transactional
+    void removeBy_uuid(String _uuid);
 
 }
